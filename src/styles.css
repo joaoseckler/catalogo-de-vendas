@@ -1,0 +1,25 @@
+* {
+  font-optical-sizing: auto;
+}
+
+header {
+  max-width: 800px;
+  margin: 0 auto;
+  padding: 40px 20px;
+}
+
+main {
+  margin: 0 auto;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 1rem;
+  max-width: 1400px;
+  padding: 1rem;
+}
+
+.item-card {
+  flex-grow: 1;
+  width: fit-content;
+  min-width: var(--item-min-width, 200px);
+  max-width: var(--item-max-width, 500px);
+}
