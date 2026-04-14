@@ -2,6 +2,7 @@ import "@mantine/core/styles.css";
 import "./styles.css";
 import {
   ActionIcon,
+  Anchor,
   Badge,
   Box,
   Button,
@@ -12,20 +13,25 @@ import {
   Group,
   Image,
   MantineProvider,
+  Modal,
   NumberFormatter,
   Stack,
   Text,
   TextInput,
   Title,
+  useMatches,
 } from "@mantine/core";
 import { useDebouncedValue } from "@mantine/hooks";
 import {
+  ArrowCircleLeftIcon,
+  ArrowCircleRightIcon,
   ArrowDownIcon,
   ArrowsVerticalIcon,
   ArrowUpIcon,
   DotsNineIcon,
   SquareIcon,
   SquaresFourIcon,
+  WhatsappLogoIcon,
   XIcon,
 } from "@phosphor-icons/react";
 import {
@@ -34,13 +40,21 @@ import {
   memo,
   type SetStateAction,
   startTransition,
+  useCallback,
   useDeferredValue,
+  useEffect,
   useMemo,
   useState,
 } from "react";
 import type { Row } from "./data";
 import rows from "./data/sheet.json";
 import { theme } from "./theme";
+
+function whatsappLink(row: Row) {
+  const telephone = "5511997498886";
+  const text = `Olá! Tenho interesse no item _${row.title}_ do catálogo de vendas (código ${row.id})`;
+  return `https://wa.me/${telephone}?text=${encodeURIComponent(text)}`;
+}
 
 function ShowPrice({
   value,
@@ -50,7 +64,7 @@ function ShowPrice({
   perUnit?: boolean;
 }) {
   return (
-    <Stack align="flex-end" gap="0">
+    <Stack gap="0">
       <Text fz="xl" fw={700} c="indigo.9">
         <NumberFormatter
           value={value}
@@ -69,38 +83,187 @@ function ShowPrice({
   );
 }
 
-const ItemCard = memo(({ row }: { row: Row }) => {
-  const firstImage = row.imageLinks[0];
-  return (
-    <Card shadow="md" radius="sm" className="item-card">
-      <Card.Section mb="md" bg="indigo.1">
-        <Image src={firstImage} alt={row.title} mah={300} fit="contain" />
-      </Card.Section>
-      <Stack justify="space-between" flex={1}>
-        <Group justify="space-between">
-          <Stack gap={0}>
-            <Title order={3}>{row.title}</Title>
-            <Text>{row.description}</Text>
-          </Stack>
-          <Stack gap="4px" align="flex-end">
-            {row.measurements ? (
-              <Badge color="indigo">{row.measurements}</Badge>
-            ) : null}
-            <Badge color="gray">cód. {row.id}</Badge>
-          </Stack>
-        </Group>
-        <ShowPrice value={row.value} perUnit={row.perUnit} />
-      </Stack>
-    </Card>
-  );
-});
+const ItemCard = memo(
+  ({
+    row,
+    selected = false,
+    setDialog,
+    imageIndex = 0,
+    nextImage,
+    previousImage,
+  }: {
+    row: Row;
+    dialogId?: number | null;
+    selected?: boolean;
+    setDialog?: (id: number | null) => void;
+    imageIndex?: number;
+    nextImage?: () => void;
+    previousImage?: () => void;
+  }) => {
+    const firstImage = row.imageLinks[imageIndex];
+    return (
+      <Card shadow="md" radius="sm" className="item-card">
+        <Card.Section
+          mb="md"
+          bg="indigo.1"
+          onClick={setDialog ? () => setDialog(row.id) : undefined}
+          style={{ cursor: setDialog ? "pointer" : "default" }}
+        >
+          <Image
+            src={firstImage}
+            alt={row.title}
+            mah={selected ? "70vh" : 300}
+            fit="contain"
+          />
+        </Card.Section>
+        <Stack justify="space-between" flex={1}>
+          <Group justify="space-between" wrap="nowrap" align="flex-start">
+            <Stack gap={0}>
+              <Title order={3}>{row.title}</Title>
+              <Text>{row.description}</Text>
+            </Stack>
+            <Stack
+              gap="4px"
+              align="flex-end"
+              style={{ flexShrink: 0 }}
+              mt="8px"
+            >
+              {row.measurements ? <Badge>{row.measurements}</Badge> : null}
+              <Badge color="gray">cód. {row.id}</Badge>
+            </Stack>
+          </Group>
+          <Group justify="space-between" align="flex-end">
+            <ShowPrice value={row.value} perUnit={row.perUnit} />
+            <Button
+              component="a"
+              href={whatsappLink(row)}
+              target="_blank"
+              color="lime.7"
+              size="sm"
+              rightSection={<WhatsappLogoIcon size={20} />}
+              className="print-hide"
+            >
+              tenho interesse
+            </Button>
+          </Group>
+        </Stack>
+        {row.imageLinks.length > 1 ? (
+          <Badge
+            variant="outline"
+            className="top-left print-hide"
+            bg="indigo.1"
+          >
+            {imageIndex + 1}/{row.imageLinks.length}
+          </Badge>
+        ) : null}
+        {selected && setDialog ? (
+          <CloseButton className="top-right" onClick={() => setDialog(null)} />
+        ) : null}
+        {previousImage ? (
+          <ActionIcon
+            variant="transparent"
+            title="imagem anterior"
+            onClick={previousImage}
+            className="middle-left"
+            size="lg"
+          >
+            <ArrowCircleLeftIcon size={36} />
+          </ActionIcon>
+        ) : null}
+        {nextImage ? (
+          <ActionIcon
+            variant="transparent"
+            title="próxima imagem"
+            onClick={nextImage}
+            className="middle-right"
+            size="lg"
+          >
+            <ArrowCircleRightIcon size={36} />
+          </ActionIcon>
+        ) : null}
+      </Card>
+    );
+  },
+);
 
 const Items = memo(({ rows }: { rows: Row[] }) => {
+  const [dialogId, setDialogId] = useState<number | null>(null);
+  const [imageIndex, setImageIndex] = useState(0);
+  const showDialog = useMatches({ md: true });
+  const selectedRow = useMemo(
+    () => rows.find((r) => r.id === dialogId) || null,
+    [dialogId, rows],
+  );
+
+  const setDialog = useCallback((id: number | null) => {
+    setDialogId(id);
+    setImageIndex(0);
+  }, []);
+
+  const nextImage = useCallback(() => {
+    if (!selectedRow) return;
+    setImageIndex((i) => (i + 1) % selectedRow.imageLinks.length);
+  }, [selectedRow]);
+
+  const previousImage = useCallback(() => {
+    if (!selectedRow) return;
+    setImageIndex((i) => (i === 0 ? selectedRow.imageLinks.length - 1 : i - 1));
+  }, [selectedRow]);
+
+  useEffect(() => {
+    function handler(e: KeyboardEvent) {
+      if (dialogId === null) return;
+
+      if (e.key === "ArrowRight") {
+        nextImage();
+      } else if (e.key === "ArrowLeft") {
+        previousImage();
+      }
+    }
+
+    window.addEventListener("keydown", handler);
+    return () => window.removeEventListener("keydown", handler);
+  }, [dialogId, nextImage, previousImage]);
+
   if (rows.length === 0) {
     return <Text c="gray">Nenhum item encontrado</Text>;
   }
 
-  return rows.map((row) => <ItemCard key={row.id} row={row} />);
+  return (
+    <>
+      {rows.map((row) => (
+        <ItemCard
+          key={row.id}
+          row={row}
+          setDialog={showDialog ? setDialog : undefined}
+        />
+      ))}
+      <Modal
+        opened={dialogId !== null}
+        onClose={() => setDialog(null)}
+        withCloseButton={false}
+        padding={0}
+        centered
+        size="auto"
+        style={{ "--item-max-width": "90vw" } as CSSProperties}
+      >
+        {selectedRow ? (
+          <ItemCard
+            row={selectedRow}
+            selected
+            setDialog={setDialogId}
+            imageIndex={imageIndex}
+            nextImage={
+              imageIndex < selectedRow.imageLinks.length - 1
+                ? nextImage
+                : undefined
+            }
+            previousImage={imageIndex > 0 ? previousImage : undefined}
+          />
+        ) : null}
+      </Modal>
+    </>
+  );
 });
 
 function SortButton({
@@ -237,7 +400,7 @@ function SearchControls({
   }
 
   return (
-    <Flex columnGap="xl" rowGap="md" wrap="wrap">
+    <Flex className="print-hide" columnGap="xl" rowGap="md" wrap="wrap">
       <TextInput
         maw={250}
         value={value}
@@ -326,7 +489,10 @@ export default function App() {
   return (
     <MantineProvider theme={theme}>
       <header>
-        <Title order={1}>Mobília e decoração à venda</Title>
+        <Group align="center" gap="xs">
+          <Image src="favicon.svg" w={30} mt="4px" />
+          <Title order={1}>Mobília e decoração à venda</Title>
+        </Group>
         <Text fz="xl" c="gray">
           catálogo de objetos
         </Text>
@@ -334,7 +500,23 @@ export default function App() {
         <Text c="indigo.9">venda de objetos em excelente estado</Text>
         <Text c="indigo.9">valores negociáveis</Text>
         <Text c="indigo.9">retirada no Alto de Pinheiros</Text>
-        <Text c="indigo.9">tratar com João: (11) 99749-8886</Text>
+        <Text c="indigo.9">
+          tratar com João:{" "}
+          <Anchor c="indigo.9" underline="always" href="tel:+5511997498886">
+            (11) 99749-8886
+          </Anchor>
+        </Text>
+        <Text c="indigo.9">indicar o código do item desejado</Text>
+        <Text c="indigo.9" className="print-only">
+          versão online:{" "}
+          <Anchor
+            c="indigo.9"
+            underline="always"
+            href="https://jseckler.xyz/catalogo"
+          >
+            jseckler.xyz/catalogo
+          </Anchor>
+        </Text>
         <Divider my="md" />
         <SearchControls
           setQuery={setValue}

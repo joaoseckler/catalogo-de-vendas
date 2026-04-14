@@ -18,8 +18,57 @@ main {
 }
 
 .item-card {
+  position: relative;
   flex-grow: 1;
   width: fit-content;
   min-width: var(--item-min-width, 200px);
   max-width: var(--item-max-width, 500px);
+}
+
+.top-right {
+  position: absolute;
+  top: 0.5rem;
+  right: 0.5rem;
+}
+
+.top-left {
+  position: absolute;
+  top: 0.5rem;
+  left: 0.5rem;
+}
+
+.middle-left {
+  position: absolute;
+  bottom: 50%;
+  left: 0.5rem;
+}
+
+.middle-right {
+  position: absolute;
+  bottom: 50%;
+  right: 0.5rem;
+}
+
+.print-only {
+  display: none;
+}
+
+@media print {
+  main {
+    --item-max-width: 300px;
+  }
+
+  .print-only {
+    display: unset;
+  }
+
+  .print-hide {
+    display: none;
+  }
+
+  .item-card {
+    box-shadow: none;
+    border: 1px solid var(--mantine-color-gray-3);
+    page-break-inside: avoid;
+  }
 }

@@ -1,6 +1,7 @@
 import crypto from "node:crypto";
 import fs from "node:fs/promises";
 import path from "node:path";
+import gm from "gm";
 import fetch from "node-fetch";
 
 const PUBLIC_DIR = "public/images";
@@ -20,6 +21,8 @@ function linkToSrc(link: string) {
 function sleep(ms: number) {
   return new Promise((r) => setTimeout(r, ms));
 }
+
+const imageMagick = gm.subClass({ imageMagick: true });
 
 async function withBackoff<T>(
   fn: () => Promise<T>,
@@ -69,14 +72,14 @@ async function _downloadImage(link: string) {
   const url = linkToSrc(link);
   if (!url) return null;
 
-  // deterministic filename (avoids duplicates)
-  const basename = crypto.createHash("sha1").update(url).digest("hex");
-  const basepath = path.join(PUBLIC_DIR, basename);
+  const hash = crypto.createHash("sha1").update(url).digest("hex");
+  const filename = `${hash}.webp`;
+  const filepath = path.join(PUBLIC_DIR, filename);
 
-  // avoid re-downloading
-  for await (const match of fs.glob(`${basepath}.*`)) {
-    return `/${path.relative("public", match)}`;
-  }
+  try {
+    await fs.access(filepath);
+    return `/images/${filename}`;
+  } catch {}
 
   console.log(`    -- Downloading image from ${url}`);
   const res = await fetch(url);
@@ -88,21 +91,18 @@ async function _downloadImage(link: string) {
     throw err;
   }
 
-  const contentType = res.headers.get("content-type") || "";
-  const ext = contentType.includes("png")
-    ? ".png"
-    : contentType.includes("jpeg")
-      ? ".jpg"
-      : contentType.includes("webp")
-        ? ".webp"
-        : "";
-
-  const filename = basename + ext;
-  const filepath = path.join(PUBLIC_DIR, filename);
   const buffer = Buffer.from(await res.arrayBuffer());
+  imageMagick(buffer)
+    .resize(800, 800, ">")
+    .toBuffer("WEBP", async (err, buffer) => {
+      if (err) {
+        console.error(`Error processing image ${filepath}:`, err);
+        return;
+      }
 
-  await fs.mkdir(PUBLIC_DIR, { recursive: true });
-  await fs.writeFile(filepath, buffer);
+      await fs.mkdir(PUBLIC_DIR, { recursive: true });
+      await fs.writeFile(filepath, buffer);
+    });
 
   return `/images/${filename}`;
 }
