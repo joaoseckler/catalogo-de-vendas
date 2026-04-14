@@ -25,6 +25,19 @@ main {
   max-width: var(--item-max-width, 500px);
 }
 
+.item-header {
+  flex-direction: var(--item-header-direction, row);
+  row-gap: 0;
+  column-gap: 0.5rem;
+}
+
+.item-badges {
+  gap: 0.25rem;
+  align-items: var(--item-badges-align, flex-end);
+  flex-shrink: 0;
+  margin-top: 0.5rem;
+}
+
 .top-right {
   position: absolute;
   top: 0.5rem;
@@ -68,7 +81,7 @@ main {
 
   .item-card {
     box-shadow: none;
-    border: 1px solid var(--mantine-color-gray-3);
+    border: none;
     page-break-inside: avoid;
   }
 }

@@ -50,6 +50,18 @@ import type { Row } from "./data";
 import rows from "./data/sheet.json";
 import { theme } from "./theme";
 
+const publicPath = import.meta.env.BASE_URL || "";
+
+function urlJoin(a: string, b: string) {
+  if (a.endsWith("/")) {
+    a = a.slice(0, -1);
+  }
+  if (b.startsWith("/")) {
+    b = b.slice(1);
+  }
+  return `${a}/${b}`;
+}
+
 function whatsappLink(row: Row) {
   const telephone = "5511997498886";
   const text = `Olá! Tenho interesse no item _${row.title}_ do catálogo de vendas (código ${row.id})`;
@@ -100,38 +112,45 @@ const ItemCard = memo(
     nextImage?: () => void;
     previousImage?: () => void;
   }) => {
-    const firstImage = row.imageLinks[imageIndex];
+    const selectedImage = row.imageLinks[imageIndex];
     return (
       <Card shadow="md" radius="sm" className="item-card">
         <Card.Section
+          component={selected ? undefined : "button"}
+          bd="none"
           mb="md"
           bg="indigo.1"
-          onClick={setDialog ? () => setDialog(row.id) : undefined}
-          style={{ cursor: setDialog ? "pointer" : "default" }}
+          onClick={(e) => {
+            e.preventDefault();
+            if (setDialog) setDialog(row.id);
+          }}
+          style={{
+            cursor: setDialog ? "pointer" : "default",
+            outlineColor: "var(--mantine-color-indigo-9)",
+          }}
         >
           <Image
-            src={firstImage}
+            src={urlJoin(publicPath, selectedImage)}
             alt={row.title}
-            mah={selected ? "70vh" : 300}
+            mah={selected ? "65vh" : 300}
             fit="contain"
           />
         </Card.Section>
         <Stack justify="space-between" flex={1}>
-          <Group justify="space-between" wrap="nowrap" align="flex-start">
+          <Flex
+            className="item-header"
+            justify="space-between"
+            align="flex-start"
+          >
             <Stack gap={0}>
               <Title order={3}>{row.title}</Title>
               <Text>{row.description}</Text>
             </Stack>
-            <Stack
-              gap="4px"
-              align="flex-end"
-              style={{ flexShrink: 0 }}
-              mt="8px"
-            >
+            <Stack className="item-badges">
               {row.measurements ? <Badge>{row.measurements}</Badge> : null}
               <Badge color="gray">cód. {row.id}</Badge>
             </Stack>
-          </Group>
+          </Flex>
           <Group justify="space-between" align="flex-end">
             <ShowPrice value={row.value} perUnit={row.perUnit} />
             <Button
@@ -157,7 +176,11 @@ const ItemCard = memo(
           </Badge>
         ) : null}
         {selected && setDialog ? (
-          <CloseButton className="top-right" onClick={() => setDialog(null)} />
+          <CloseButton
+            className="top-right"
+            onClick={() => setDialog(null)}
+            title="fechar janela"
+          />
         ) : null}
         {previousImage ? (
           <ActionIcon
@@ -300,13 +323,17 @@ function SortButton({
 
 type Size = "small" | "medium" | "large";
 const defaultSize = "large";
+const smallStyles = {
+  "--item-header-direction": "column",
+  "--item-badges-align": "flex-start",
+};
 
 function sizeToStyle(size: Size): CSSProperties {
   switch (size) {
     case "small":
-      return { "--item-max-width": "180px" } as CSSProperties;
+      return { "--item-max-width": "180px", ...smallStyles } as CSSProperties;
     case "medium":
-      return { "--item-max-width": "250px" } as CSSProperties;
+      return { "--item-max-width": "250px", ...smallStyles } as CSSProperties;
     case "large":
       return { "--item-max-width": "500px" } as CSSProperties;
     default:
@@ -327,6 +354,7 @@ function SizeControl({
         size="lg"
         variant={size === "small" ? "filled" : "light"}
         onClick={() => setSize("small")}
+        title="ver itens em tamanho pequeno"
       >
         <DotsNineIcon size={30} />
       </ActionIcon>
@@ -334,6 +362,7 @@ function SizeControl({
         variant={size === "medium" ? "filled" : "light"}
         size="lg"
         onClick={() => setSize("medium")}
+        title="ver itens em tamanho médio"
       >
         <SquaresFourIcon size={30} />
       </ActionIcon>
@@ -341,6 +370,7 @@ function SizeControl({
         variant={size === "large" ? "filled" : "light"}
         size="lg"
         onClick={() => setSize("large")}
+        title="ver itens em tamanho grande"
       >
         <SquareIcon size={30} />
       </ActionIcon>
@@ -400,13 +430,23 @@ function SearchControls({
   }
 
   return (
-    <Flex className="print-hide" columnGap="xl" rowGap="md" wrap="wrap">
+    <Flex
+      className="print-hide search-controls"
+      columnGap="xl"
+      rowGap="md"
+      wrap="wrap"
+    >
       <TextInput
         maw={250}
         value={value}
         onChange={(e) => handleSearch(e.target.value)}
         placeholder="pesquisar..."
-        rightSection={<CloseButton onClick={() => handleSearch("")} />}
+        rightSection={
+          <CloseButton
+            onClick={() => handleSearch("")}
+            title="limpar pesquisa"
+          />
+        }
       />
       <Button.Group>
         <Button.GroupSection variant="light" p="xs">
@@ -434,7 +474,7 @@ function SearchControls({
           p="xs"
           variant="light"
           onClick={() => handleSort(null)}
-          aria-label="fechar"
+          title="remover ordenação"
         >
           <XIcon size={16} />
         </Button>
@@ -490,7 +530,7 @@ export default function App() {
     <MantineProvider theme={theme}>
       <header>
         <Group align="center" gap="xs">
-          <Image src="favicon.svg" w={30} mt="4px" />
+          <Image src="favicon.svg" w={30} mt="4px" role="presentation" />
           <Title order={1}>Mobília e decoração à venda</Title>
         </Group>
         <Text fz="xl" c="gray">
