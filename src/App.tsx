@@ -113,19 +113,29 @@ const ItemCard = memo(
     previousImage?: () => void;
   }) => {
     const selectedImage = row.imageLinks[imageIndex];
+    const available = row.status === "";
+
     return (
-      <Card shadow="md" radius="sm" className="item-card">
+      <Card
+        shadow="md"
+        radius="sm"
+        className="item-card"
+        style={{
+          opacity: available ? 1 : 0.5,
+        }}
+      >
         <Card.Section
           component={selected ? undefined : "button"}
+          disabled={!available}
           bd="none"
           mb="md"
           bg="indigo.1"
           onClick={(e) => {
             e.preventDefault();
-            if (setDialog) setDialog(row.id);
+            if (setDialog && available) setDialog(row.id);
           }}
           style={{
-            cursor: setDialog ? "pointer" : "default",
+            cursor: setDialog && available ? "pointer" : "default",
             outlineColor: "var(--mantine-color-indigo-9)",
           }}
         >
@@ -147,6 +157,14 @@ const ItemCard = memo(
               <Text>{row.description}</Text>
             </Stack>
             <Stack className="item-badges">
+              {!available ? (
+                <Badge
+                  color={row.status === "reservado" ? "orange" : "red"}
+                  variant="filled"
+                >
+                  {row.status === "reservado" ? "reservado" : "vendido"}
+                </Badge>
+              ) : null}
               {row.measurements ? <Badge>{row.measurements}</Badge> : null}
               <Badge color="gray">cód. {row.id}</Badge>
             </Stack>
@@ -154,13 +172,14 @@ const ItemCard = memo(
           <Group justify="space-between" align="flex-end">
             <ShowPrice value={row.value} perUnit={row.perUnit} />
             <Button
-              component="a"
+              component={available ? "a" : undefined}
               href={whatsappLink(row)}
               target="_blank"
               color="lime.7"
               size="sm"
               rightSection={<WhatsappLogoIcon size={20} />}
               className="print-hide"
+              disabled={!available}
             >
               tenho interesse
             </Button>
