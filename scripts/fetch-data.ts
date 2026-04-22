@@ -1,10 +1,18 @@
 import fs from "node:fs/promises";
 import { parse } from "csv-parse/sync";
+import minimist from "minimist";
 import fetch from "node-fetch";
 import { type Row, RowSchema } from "../src/data";
 import { downloadImage } from "./image";
 
 const CONFIG_PATH = "sites.json";
+let VERBOSE = false;
+
+function log(...args: any[]) {
+  if (VERBOSE) {
+    console.log(...args);
+  }
+}
 
 function sheetUrlToDownload(url: string) {
   const match = url.match(
@@ -47,7 +55,7 @@ async function fetchSiteData(site: string, url: string) {
   data = data.slice(1);
   data = data.filter((row) => row.id && row.title);
   data = data.map((row, i) => {
-    console.log(`Validating row ${i + 1}/${data.length}...`);
+    log(`Validating row ${i + 1}/${data.length}...`);
     const result = RowSchema.safeParse(row);
 
     if (!result.success) {
@@ -60,7 +68,7 @@ async function fetchSiteData(site: string, url: string) {
   });
 
   for (const row of data) {
-    console.log(`Processing images for row ${row.id + 1}/${data.length}...`);
+    log(`Processing images for row ${row.id + 1}/${data.length}...`);
     const paths: string[] = [];
     for (const link of row.imageLinks) {
       if (typeof link !== "string" || !link.startsWith("http")) {
@@ -84,7 +92,7 @@ async function fetchSiteData(site: string, url: string) {
 }
 
 async function fetchSitesData() {
-  console.log("Fetching sites data...");
+  log("Fetching sites data...");
   const res = await fetch(
     sheetUrlToDownload(process.env.SITES_CONFIG_URL || ""),
   );
@@ -125,6 +133,24 @@ async function readConfig() {
 }
 
 async function readAndFetchAll() {
+  const options = minimist(process.argv.slice(2), {
+    alias: { v: "verbose", h: "help", s: "site" },
+    boolean: ["verbose", "help"],
+    string: ["site"],
+  });
+
+  VERBOSE = (options.verbose || false) as boolean;
+  const help: boolean = options.help || false;
+
+  if (help) {
+    console.log("Usage: bun scripts/fetch-data.ts [options]");
+    console.log("Options:");
+    console.log("  -v, --verbose   Enable verbose logging");
+    console.log("  -h, --help      Show this help message");
+    console.log("  -s, --site      Select site by name");
+    return;
+  }
+
   try {
     await fetchSitesData();
   } catch {
@@ -140,8 +166,12 @@ async function readAndFetchAll() {
 
   const config = await readConfig();
   for (const { name, url } of config) {
-    console.log("------");
-    console.log(`Fetching data for ${name}...\n`);
+    log("------");
+    if (options.site && options.site !== name) {
+      log(`Skipping ${name} (not selected)`);
+      continue;
+    }
+    log(`Fetching data for ${name}...\n`);
     try {
       await fetchSiteData(name, url);
     } catch (error) {
