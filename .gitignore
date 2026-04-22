@@ -1,3 +1,8 @@
+images/
+public/
+sites.json
+index.html
+
 # Logs
 logs
 *.log
@@ -130,6 +135,3 @@ dist
 .pnp.*
 
 .DS_Store
-
-public/images/
-src/data/sheet.json

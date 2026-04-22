@@ -2,7 +2,6 @@ import "@mantine/core/styles.css";
 import "./styles.css";
 import {
   ActionIcon,
-  Anchor,
   Badge,
   Box,
   Button,
@@ -48,6 +47,7 @@ import {
 } from "react";
 import type { Row } from "./data";
 import rows from "./data/sheet.json";
+import site from "./data/site.json";
 import { theme } from "./theme";
 
 const publicPath = import.meta.env.BASE_URL || "";
@@ -77,7 +77,7 @@ function ShowPrice({
 }) {
   return (
     <Stack gap="0">
-      <Text fz="xl" fw={700} c="indigo.9">
+      <Text fz="xl" fw={700} c={`${theme.primaryColor}.9`}>
         <NumberFormatter
           value={value}
           prefix={"R$\u2009"}
@@ -112,8 +112,12 @@ const ItemCard = memo(
     nextImage?: () => void;
     previousImage?: () => void;
   }) => {
+    if (row.status === "não localizado") {
+      return null;
+    }
+
     const selectedImage = row.imageLinks[imageIndex];
-    const available = row.status === "";
+    const available = row.status === "à venda" || row.status === "";
 
     return (
       <Card
@@ -129,14 +133,14 @@ const ItemCard = memo(
           disabled={!available}
           bd="none"
           mb="md"
-          bg="indigo.1"
+          bg={`${theme.primaryColor}.1`}
           onClick={(e) => {
             e.preventDefault();
             if (setDialog && available) setDialog(row.id);
           }}
           style={{
             cursor: setDialog && available ? "pointer" : "default",
-            outlineColor: "var(--mantine-color-indigo-9)",
+            outlineColor: "var(--mantine-primary-color-9)",
           }}
         >
           <Image
@@ -189,7 +193,7 @@ const ItemCard = memo(
           <Badge
             variant="outline"
             className="top-left print-hide"
-            bg="indigo.1"
+            bg={`${theme.primaryColor}.1`}
           >
             {imageIndex + 1}/{row.imageLinks.length}
           </Badge>
@@ -548,33 +552,25 @@ export default function App() {
   return (
     <MantineProvider theme={theme}>
       <header>
-        <Group align="center" gap="xs">
-          <Image src="favicon.svg" w={30} mt="4px" role="presentation" />
-          <Title order={1}>Mobília e decoração à venda</Title>
+        <Group align="flex-end" gap="xs">
+          <Image src="favicon.webp" w={70} role="presentation" />
+          <div>
+            <Title order={1}>{site.title}</Title>
+            <Text fz="xl" c="gray">
+              {site.subtitle}
+            </Text>
+          </div>
         </Group>
-        <Text fz="xl" c="gray">
-          catálogo de objetos
-        </Text>
         <Divider mt="xl" mb="md" />
-        <Text c="indigo.9">venda de objetos em excelente estado</Text>
-        <Text c="indigo.9">valores negociáveis</Text>
-        <Text c="indigo.9">retirada no Alto de Pinheiros</Text>
-        <Text c="indigo.9">
-          tratar com João:{" "}
-          <Anchor c="indigo.9" underline="always" href="tel:+5511997498886">
-            (11) 99749-8886
-          </Anchor>
-        </Text>
-        <Text c="indigo.9">indicar o código do item desejado</Text>
-        <Text c="indigo.9" className="print-only">
-          versão online:{" "}
-          <Anchor
-            c="indigo.9"
-            underline="always"
-            href="https://jseckler.xyz/catalogo"
-          >
-            jseckler.xyz/catalogo
-          </Anchor>
+        <Text
+          styles={{
+            root: {
+              whiteSpace: "pre-line",
+              color: "var(--mantine-primary-color-9)",
+            },
+          }}
+        >
+          {site.description}
         </Text>
         <Divider my="md" />
         <SearchControls

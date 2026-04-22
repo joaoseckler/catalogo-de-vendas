@@ -1,0 +1,16 @@
+[
+  {
+    "name": "catalogo",
+    "title": "Meu catálogo",
+    "subtitle": "muito bonitos",
+    "description": "venda de objetos em excelente estado",
+    "primaryColor": "indigo",
+    "url": "<url-para-venda>",
+    "host": "hostname.example.com",
+    "deployPath": "/var/www/catalogo",
+    "favicon": "<url-para-gdrive-favicon>",
+    "og": "<url-para-gdrive-og>",
+    "domain": "jseckler.xyz",
+    "basePath": "hostname.example.com"
+  }
+]

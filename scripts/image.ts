@@ -2,9 +2,9 @@ import crypto from "node:crypto";
 import fs from "node:fs/promises";
 import path from "node:path";
 import gm from "gm";
-import fetch from "node-fetch";
+import fetch, { type Response } from "node-fetch";
 
-const PUBLIC_DIR = "public/images";
+const BASE_DIR = "images/";
 
 function linkToSrc(link: string) {
   const url = new URL(link);
@@ -37,7 +37,8 @@ async function withBackoff<T>(
   while (attempt < 15) {
     try {
       return await fn();
-    } catch (err) {
+    } catch (error) {
+      const err = error as Error & { response?: Response; status?: number };
       attempt++;
 
       const retryAfter = err?.response?.headers?.get?.("retry-after");
@@ -51,7 +52,7 @@ async function withBackoff<T>(
 
       // retry only for rate limit / transient errors
       const retryable =
-        status === 429 || (status >= 500 && status < 600) || !status; // network errors
+        status === 429 || (status && status >= 500 && status < 600) || !status; // network errors
 
       if (!retryable || attempt > retries) {
         throw err;
@@ -68,24 +69,29 @@ async function withBackoff<T>(
   }
 }
 
-async function _downloadImage(link: string) {
+async function _downloadImage(link: string, site: string, prefix: string) {
   const url = linkToSrc(link);
   if (!url) return null;
 
   const hash = crypto.createHash("sha1").update(url).digest("hex");
   const filename = `${hash}.webp`;
-  const filepath = path.join(PUBLIC_DIR, filename);
+  const directory = path.join(BASE_DIR, site, prefix);
+  const filepath = path.join(directory, filename);
 
   try {
     await fs.access(filepath);
-    return `/images/${filename}`;
+    return `/${prefix}/${filename}`;
   } catch {}
 
   console.log(`    -- Downloading image from ${url}`);
   const res = await fetch(url);
 
   if (!res.ok) {
-    const err = new Error(`HTTP ${res.status}`);
+    const err = new Error(`HTTP ${res.status}`) as Error & {
+      status: number;
+      response: Response;
+    };
+
     err.status = res.status;
     err.response = res;
     throw err;
@@ -100,13 +106,17 @@ async function _downloadImage(link: string) {
         return;
       }
 
-      await fs.mkdir(PUBLIC_DIR, { recursive: true });
+      await fs.mkdir(directory, { recursive: true });
       await fs.writeFile(filepath, buffer);
     });
 
-  return `/images/${filename}`;
+  return `/${prefix}/${filename}`;
 }
 
-export async function downloadImage(link: string) {
-  return withBackoff(() => _downloadImage(link));
+export async function downloadImage(
+  link: string,
+  site: string,
+  prefix: string,
+) {
+  return withBackoff(() => _downloadImage(link, site, prefix));
 }
