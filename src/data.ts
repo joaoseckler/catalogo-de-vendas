@@ -36,4 +36,23 @@ export const RowSchema = z.object({
   status: z.string().nullable(),
 });
 
+export const ConfigSchema = z.object({
+  url: z.string(),
+  name: z.string(),
+  domain: z.string(),
+  basePath: z.string(),
+  deployPath: z.string(),
+  title: z.string(),
+  subtitle: z.string(),
+  description: z.string(),
+  primaryColor: z.string(),
+  favicon: z.string(),
+  logo: z.string(),
+  og: z.string(),
+  extraCss: z.string(),
+  showReserved: z.preprocess(toBoolean, z.coerce.boolean()),
+  showSold: z.preprocess(toBoolean, z.coerce.boolean()),
+});
+
 export type Row = z.infer<typeof RowSchema>;
+export type Config = z.infer<typeof ConfigSchema>;

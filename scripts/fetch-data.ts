@@ -2,7 +2,7 @@ import fs from "node:fs/promises";
 import { parse } from "csv-parse/sync";
 import minimist from "minimist";
 import fetch from "node-fetch";
-import { type Row, RowSchema } from "../src/data";
+import { type Config, ConfigSchema, type Row, RowSchema } from "../src/data";
 import { downloadImage } from "./image";
 
 const CONFIG_PATH = "sites.json";
@@ -102,6 +102,14 @@ async function fetchSitesData() {
     columns: true,
     skip_empty_lines: true,
     trim: true,
+  }).map((row) => {
+    const result = ConfigSchema.safeParse(row);
+    if (!result.success) {
+      console.error(`Invalid config row:`);
+      console.error(JSON.stringify(result.error, null, 2));
+      process.exit(1);
+    }
+    return result.data;
   });
 
   await fs.writeFile(CONFIG_PATH, JSON.stringify(data, null, 2));
@@ -111,20 +119,14 @@ async function readConfig() {
   const raw = await fs.readFile(CONFIG_PATH, "utf-8");
   const data = JSON.parse(raw);
 
-  for (const { favicon, name, og } of data) {
-    if (favicon) {
-      const path = await downloadImage(favicon, name, "favicons");
-      if (!path) {
-        console.error(`Failed to download favicon from link: ${favicon}`);
-        process.exit(1);
-      }
-    }
-
-    if (og) {
-      const path = await downloadImage(og, name, "og");
-      if (!path) {
-        console.error(`Failed to download og iamge from link: ${og}`);
-        process.exit(1);
+  for (const { name, ...row } of data) {
+    for (const key of ["favicon", "og", "logo"] as const) {
+      if (row[key]) {
+        const path = await downloadImage(row[key], name, key);
+        if (!path) {
+          console.error(`Failed to download ${key} from link: ${row[key]}`);
+          process.exit(1);
+        }
       }
     }
   }

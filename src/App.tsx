@@ -95,6 +95,22 @@ function ShowPrice({
   );
 }
 
+function isAvailable(status: Row["status"]) {
+  // Return true or false for availability. Return null for hidden items.
+
+  if (status === "à venda" || status === "") {
+    return true;
+  } else if (status === "reservado") {
+    return site.showReserved ? false : null;
+  } else if (status === "vendido") {
+    return site.showSold ? false : null;
+  } else if (status === "não localizado") {
+    return null;
+  }
+
+  return true;
+}
+
 const ItemCard = memo(
   ({
     row,
@@ -112,12 +128,12 @@ const ItemCard = memo(
     nextImage?: () => void;
     previousImage?: () => void;
   }) => {
-    if (row.status === "não localizado") {
+    const available = isAvailable(row.status);
+    if (available === null) {
       return null;
     }
 
     const selectedImage = row.imageLinks[imageIndex];
-    const available = row.status === "à venda" || row.status === "";
 
     return (
       <Card
@@ -551,9 +567,10 @@ export default function App() {
 
   return (
     <MantineProvider theme={theme}>
+      {"extraCss" in site ? <style>{site.extraCss}</style> : null}
       <header>
-        <Group align="flex-end" gap="xs">
-          <Image src="favicon.webp" w={70} role="presentation" />
+        <Group align="center" gap="xs">
+          <Image src="logo.webp" w={100} role="presentation" id="logo" />
           <div>
             <Title order={1}>{site.title}</Title>
             <Text fz="xl" c="gray">

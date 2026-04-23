@@ -83,7 +83,15 @@ async function getLatestFileInDirectory(
 
 async function copyImages(site: string) {
   const siteDirectory = path.join("images", site);
-  if (!fs.stat(siteDirectory).catch(() => false)) {
+
+  let exists = true;
+  try {
+    await fs.stat(siteDirectory);
+  } catch {
+    exists = false;
+  }
+
+  if (!exists) {
     console.warn(
       `No images folder found for site "${site}" in images. Skipping image copy.`,
     );
@@ -92,43 +100,35 @@ async function copyImages(site: string) {
 
   await fs.mkdir("public/images", { recursive: true });
 
+  const dest = `public/images/`;
+
+  await fs.rm(dest, { recursive: true });
+  await fs.mkdir(dest, { recursive: true });
+
   const images = await fs.readdir(`${siteDirectory}/images`);
   for (const image of images) {
     await fs.copyFile(
       `${siteDirectory}/images/${image}`,
-      `public/images/${image}`,
+      path.join(dest, image),
     );
   }
 
-  const faviconFile = await getLatestFileInDirectory(
-    path.join(siteDirectory, "favicons"),
-  );
+  for (const [key, target] of [
+    ["favicon", "favicon.webp"],
+    ["og", "og-image.webp"],
+    ["logo", "logo.webp"],
+  ]) {
+    const file = await getLatestFileInDirectory(path.join(siteDirectory, key));
 
-  if (!faviconFile) {
-    console.warn(
-      `No favicon found for site "${site}" in images. Skipping favicon copy.`,
-    );
-    return;
+    if (!file) {
+      console.warn(
+        `No ${key} found for site "${site}" in images. Skipping copy.`,
+      );
+      return;
+    }
+
+    await fs.copyFile(path.join(siteDirectory, key, file), `public/${target}`);
   }
-
-  await fs.copyFile(
-    path.join(siteDirectory, "favicons", faviconFile),
-    `public/favicon.webp`,
-  );
-
-  const ogFile = await getLatestFileInDirectory(path.join(siteDirectory, "og"));
-
-  if (!ogFile) {
-    console.warn(
-      `No of file found for site "${site}" in images. Skipping of file copy.`,
-    );
-    return;
-  }
-
-  await fs.copyFile(
-    path.join(siteDirectory, "og", ogFile),
-    `public/og-image.webp`,
-  );
 }
 
 async function main() {
