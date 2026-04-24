@@ -63,7 +63,7 @@ function urlJoin(a: string, b: string) {
 }
 
 function whatsappLink(row: Row) {
-  const telephone = "5511997498886";
+  const telephone = site.cellphone.replace(/\D/g, "");
   const text = `Olá! Tenho interesse no item _${row.title}_ do catálogo de vendas (código ${row.id})`;
   return `https://wa.me/${telephone}?text=${encodeURIComponent(text)}`;
 }
@@ -570,16 +570,25 @@ export default function App() {
       {"extraCss" in site ? <style>{site.extraCss}</style> : null}
       <header>
         <Group align="center" gap="xs">
-          <Image src="logo.webp" w={100} role="presentation" id="logo" />
+          <Image
+            src="logo.webp"
+            w={65}
+            role="presentation"
+            id="logo"
+            alt={site.title}
+          />
           <div>
-            <Title order={1}>{site.title}</Title>
-            <Text fz="xl" c="gray">
+            <Title order={1} id="title">
+              {site.title}
+            </Title>
+            <Text fz="xl" c="gray" id="subtitle">
               {site.subtitle}
             </Text>
           </div>
         </Group>
         <Divider mt="xl" mb="md" />
         <Text
+          id="description"
           styles={{
             root: {
               whiteSpace: "pre-line",

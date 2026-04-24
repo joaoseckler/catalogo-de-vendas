@@ -46,6 +46,7 @@ export const ConfigSchema = z.object({
   subtitle: z.string(),
   description: z.string(),
   primaryColor: z.string(),
+  cellphone: z.string(),
   favicon: z.string(),
   logo: z.string(),
   og: z.string(),
