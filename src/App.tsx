@@ -18,6 +18,7 @@ import {
   Text,
   TextInput,
   Title,
+  Typography,
   useMatches,
 } from "@mantine/core";
 import { useDebouncedValue } from "@mantine/hooks";
@@ -45,6 +46,7 @@ import {
   useMemo,
   useState,
 } from "react";
+import ReactMarkdown from "react-markdown";
 import type { Row } from "./data";
 import rows from "./data/sheet.json";
 import site from "./data/site.json";
@@ -587,17 +589,10 @@ export default function App() {
           </div>
         </Group>
         <Divider mt="xl" mb="md" />
-        <Text
-          id="description"
-          styles={{
-            root: {
-              whiteSpace: "pre-line",
-              color: "var(--mantine-primary-color-9)",
-            },
-          }}
-        >
-          {site.description}
-        </Text>
+
+        <Typography id="description">
+          <ReactMarkdown>{site.description}</ReactMarkdown>
+        </Typography>
         <Divider my="md" />
         <SearchControls
           setQuery={setValue}
