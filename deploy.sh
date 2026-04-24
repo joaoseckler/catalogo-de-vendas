@@ -6,7 +6,6 @@ if [ ! -z $1 ]; then
   selected_site="$1"
 fi
 
-
 jq --raw-output -c '.[]' sites.json | while read i; do
   site="$(echo "$i" | jq --raw-output -c '.name')"
 
