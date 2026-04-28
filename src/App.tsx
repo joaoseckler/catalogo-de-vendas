@@ -35,7 +35,7 @@ import {
   useMemo,
   useState,
 } from "react";
-import ReactMarkdown from "react-markdown";
+import ReactMarkdown, { defaultUrlTransform } from "react-markdown";
 import type { Row } from "./data";
 import rows from "./data/sheet.json";
 import site from "./data/site.json";
@@ -394,7 +394,13 @@ export default function App() {
         <Divider mt="xl" mb="md" />
 
         <Typography id="description">
-          <ReactMarkdown>{site.description}</ReactMarkdown>
+          <ReactMarkdown
+            urlTransform={(url) =>
+              url.startsWith("tel:") ? url : defaultUrlTransform(url)
+            }
+          >
+            {site.description}
+          </ReactMarkdown>
         </Typography>
         <Divider my="md" />
         <SearchControls
