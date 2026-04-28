@@ -18,6 +18,10 @@ jq --raw-output -c '.[]' sites.json | while read i; do
     continue
   fi
 
+  echo =========================================================
+  echo "Deploying $site"
+  bun run scripts/fetch-data.js -s "$site"
+
   export SITE="$site"
   deploy_path="$(echo "$i" | jq --raw-output -c '.deployPath')"
   pages="$(echo "$i" | jq --raw-output -c '.pages')"
@@ -37,14 +41,11 @@ jq --raw-output -c '.[]' sites.json | while read i; do
     fi
   fi
 
-  echo =========================================================
-  echo "Deploying $site"
-  bun run scripts/fetch-data.js -s "$site"
   bun run build
 
-  if [ -n "$pages" ]; then
-    wrangler pages deploy dist --project-name "$site"
-  else
+  if [ -z "$pages" ]; then
     rsync -avz --delete dist/ "$dest"
+  else
+    wrangler pages deploy dist --project-name "$pages"
   fi
 done

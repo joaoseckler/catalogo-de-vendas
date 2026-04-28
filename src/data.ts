@@ -43,6 +43,7 @@ export const ConfigSchema = z.object({
   domain: z.string(),
   basePath: z.string(),
   deployPath: z.string(),
+  pages: z.string(),
   title: z.string(),
   subtitle: z.string(),
   description: z.string(),
