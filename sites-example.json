@@ -11,6 +11,7 @@
     "favicon": "<url-para-gdrive-favicon>",
     "og": "<url-para-gdrive-og>",
     "domain": "jseckler.xyz",
-    "basePath": "hostname.example.com"
+    "basePath": "hostname.example.com",
+    "pages": "meu-site"
   }
 ]
