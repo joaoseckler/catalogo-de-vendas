@@ -34,6 +34,7 @@ export const RowSchema = z.object({
     z.array(z.coerce.string()).default([]),
   ),
   status: z.string().nullable(),
+  category: z.string().nullable(),
 });
 
 export const ConfigSchema = z.object({

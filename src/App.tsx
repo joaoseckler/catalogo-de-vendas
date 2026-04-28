@@ -28,6 +28,7 @@ import {
 import {
   type CSSProperties,
   type Dispatch,
+  memo,
   type SetStateAction,
   startTransition,
   useDeferredValue,
@@ -35,6 +36,7 @@ import {
   useState,
 } from "react";
 import ReactMarkdown from "react-markdown";
+import type { Row } from "./data";
 import rows from "./data/sheet.json";
 import site from "./data/site.json";
 import Items from "./items";
@@ -243,6 +245,81 @@ type Sort = {
   field: SortField;
   dir: SortDir;
 };
+type Category = {
+  name: string;
+  count: number;
+  thumbnail: string | null;
+};
+
+const Categories = memo(
+  ({
+    categories,
+    setCategory,
+    category,
+  }: {
+    categories: Record<string, Category>;
+    setCategory: (category: string | null) => void;
+    category: string | null;
+  }) => {
+    return (
+      <>
+        {Object.values(categories).map((cat) => (
+          <Button
+            key={cat.name}
+            variant="transparent"
+            bd={
+              category === cat.name
+                ? "2px solid var(--mantine-primary-color-7)"
+                : "1px solid var(--mantine-primary-color-3)"
+            }
+            h="100"
+            onClick={() => setCategory(category === cat.name ? null : cat.name)}
+            leftSection={
+              cat.thumbnail ? (
+                <Image
+                  src={cat.thumbnail}
+                  alt={cat.name}
+                  width={100}
+                  height={100}
+                  fit="cover"
+                  radius="sm"
+                />
+              ) : null
+            }
+          >
+            <Group gap="4px">
+              {cat.name}
+              <Text variant="caption" fz="xs">
+                ({cat.count})
+              </Text>
+            </Group>
+          </Button>
+        ))}
+        <CloseButton
+          title="limpar filtro de categoria"
+          onClick={() => setCategory(null)}
+        />
+      </>
+    );
+  },
+);
+
+function calcCategories(rows: Row[]) {
+  const categories: Record<string, Category> = {};
+  for (const row of rows) {
+    if (!row.category) continue;
+
+    categories[row.category] = {
+      name: row.category,
+      count: (categories[row.category]?.count ?? 0) + 1,
+      thumbnail:
+        categories[row.category]?.thumbnail ?? row.imageLinks[0] ?? null,
+    };
+  }
+
+  if (Object.keys(categories).length === 0) return null;
+  return categories;
+}
 
 export default function App() {
   const [value, setValue] = useState("");
@@ -250,17 +327,24 @@ export default function App() {
   const deferredValue = useDeferredValue(debouncedValue);
   const [sort, setSort] = useState<Sort | null>(null);
   const [size, setSize] = useState<Size>(defaultSize);
+  const [category, setCategory] = useState<string | null>(null);
 
   const filteredRows = useMemo(() => {
+    let filtered = rows;
+
     const searchValue = deferredValue.toLowerCase();
-    return rows
-      .filter((row) => {
+    if (searchValue) {
+      filtered = filtered.filter((row) => {
         return (
           row.title.toLowerCase().includes(searchValue) ||
-          row.description.toLowerCase().includes(searchValue)
+          row.description.toLowerCase().includes(searchValue) ||
+          row.id.toString().includes(searchValue)
         );
-      })
-      .sort((a, b) => {
+      });
+    }
+
+    if (sort?.field && sort?.dir) {
+      filtered = filtered.sort((a, b) => {
         if (!sort?.field && !sort?.dir) return 0;
 
         let compareValue = 0;
@@ -275,7 +359,16 @@ export default function App() {
 
         return sort.dir === "asc" ? compareValue : -compareValue;
       });
-  }, [deferredValue, sort?.field, sort?.dir]);
+    }
+
+    if (category) {
+      filtered = filtered.filter((row) => row.category === category);
+    }
+
+    return filtered;
+  }, [deferredValue, sort?.field, sort?.dir, category]);
+
+  const categories = useMemo(() => calcCategories(rows), []);
 
   return (
     <MantineProvider theme={theme}>
@@ -311,7 +404,18 @@ export default function App() {
         />
       </header>
       <main style={sizeToStyle(size)}>
-        <Items rows={filteredRows}></Items>
+        {categories ? (
+          <section className="categories print-hide">
+            <Categories
+              categories={categories}
+              setCategory={setCategory}
+              category={category}
+            />
+          </section>
+        ) : null}
+        <section className="items">
+          <Items rows={filteredRows}></Items>
+        </section>
       </main>
     </MantineProvider>
   );

@@ -5,16 +5,22 @@
 header {
   max-width: 800px;
   margin: 0 auto;
-  padding: 40px 20px;
+  padding: 20px;
 }
 
-main {
+section {
   margin: 0 auto;
   display: flex;
   flex-wrap: wrap;
   gap: 1rem;
   max-width: 1400px;
   padding: 1rem;
+}
+
+section.categories {
+  justify-content: center;
+  margin-bottom: 1rem;
+  align-items: center;
 }
 
 .item-card {
@@ -67,7 +73,7 @@ main {
 }
 
 @media print {
-  main {
+  section.items {
     --item-max-width: 300px;
   }
 

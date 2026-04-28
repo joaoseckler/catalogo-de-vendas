@@ -160,6 +160,9 @@ const ItemCard = memo(
               <Text>{row.description}</Text>
             </Stack>
             <Stack className="item-badges">
+              {row.category ? (
+                <Badge variant="outline">{row.category}</Badge>
+              ) : null}
               {!available ? (
                 <Badge
                   color={row.status === "reservado" ? "orange" : "red"}
@@ -271,7 +274,11 @@ const Items = memo(({ rows }: { rows: Row[] }) => {
   }, [dialogId, nextImage, previousImage]);
 
   if (rows.length === 0) {
-    return <Text c="gray">Nenhum item encontrado</Text>;
+    return (
+      <Text c="gray" mx="auto" display="block">
+        Nenhum item encontrado
+      </Text>
+    );
   }
 
   return (

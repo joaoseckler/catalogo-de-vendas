@@ -41,6 +41,7 @@ async function fetchSiteData(site: string, url: string) {
     medidas: "measurements",
     "links para imagens": "imageLinks",
     status: "status",
+    categoria: "category",
   };
 
   let data: Row[] = parse(text, {
