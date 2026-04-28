@@ -2,6 +2,10 @@ set -a
 . ./.env
 set +a
 
+export NVM_DIR="$HOME/.nvm"
+[ -s "$NVM_DIR/nvm.sh" ] && \. "$NVM_DIR/nvm.sh"  # This loads nvm
+[ -s "$HOME/.bun/bin/bun" ] && export PATH="$HOME/.bun/bin:$PATH"  # This loads bun
+
 if [ ! -z $1 ]; then
   selected_site="$1"
 fi
