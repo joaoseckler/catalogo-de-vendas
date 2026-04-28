@@ -2,6 +2,7 @@ import "@mantine/core/styles.css";
 import "./styles.css";
 import {
   ActionIcon,
+  Anchor,
   Box,
   Button,
   CloseButton,
@@ -423,6 +424,19 @@ export default function App() {
           <Items rows={filteredRows}></Items>
         </section>
       </main>
+      <footer>
+        <Text c="gray" fz="sm">
+          design e desenvolvimento:{" "}
+          <Anchor
+            fz="inherit"
+            href="https://jseckler.xyz"
+            target="_blank"
+            rel="noopener"
+          >
+            jseckler.xyz
+          </Anchor>
+        </Text>
+      </footer>
     </MantineProvider>
   );
 }

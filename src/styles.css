@@ -8,7 +8,8 @@ header {
   padding: 20px;
 }
 
-section {
+section,
+footer {
   margin: 0 auto;
   display: flex;
   flex-wrap: wrap;
@@ -20,6 +21,14 @@ section {
 section.categories {
   justify-content: center;
   margin-bottom: 1rem;
+  align-items: center;
+}
+
+footer {
+  width: min(500px, 100vw);
+  margin-block: 1rem;
+  border-top: 1px solid var(--mantine-primary-color-1);
+  justify-content: center;
   align-items: center;
 }
 
