@@ -2,7 +2,7 @@ import fs from "node:fs/promises";
 import { parse } from "csv-parse/sync";
 import minimist from "minimist";
 import fetch from "node-fetch";
-import { type Config, ConfigSchema, type Row, RowSchema } from "../src/data";
+import { ConfigSchema, type Row, RowSchema } from "../src/data";
 import { downloadImage } from "./image";
 
 const CONFIG_PATH = "sites.json";
