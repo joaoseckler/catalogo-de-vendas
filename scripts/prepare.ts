@@ -1,6 +1,10 @@
 import fs from "node:fs/promises";
 import path from "node:path";
 import ejs from "ejs";
+import remarkParse from "remark-parse";
+import remarkStringify from "remark-stringify";
+import strip from "strip-markdown";
+import { unified } from "unified";
 
 async function getSite() {
   let site = process.env.SITE;
@@ -54,10 +58,20 @@ async function createSiteConfig(
   await fs.writeFile("src/data/site.json", JSON.stringify(siteData, null, 2));
 }
 
+async function markdownToPlainText(markdown: string): Promise<string> {
+  const result = await unified()
+    .use(remarkParse)
+    .use(strip)
+    .use(remarkStringify)
+    .process(markdown);
+  return result.toString().trim();
+}
+
 async function createIndex(siteData: Record<string, string>) {
   // Write index.html from template
   const template = await fs.readFile("index.template.html", "utf-8");
-  const html = ejs.render(template, siteData);
+  const description = await markdownToPlainText(siteData.description);
+  const html = ejs.render(template, { ...siteData, description });
 
   await fs.writeFile("index.html", html);
 }
