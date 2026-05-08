@@ -22,6 +22,7 @@ import {
   ArrowsVerticalIcon,
   ArrowUpIcon,
   DotsNineIcon,
+  EmptyIcon,
   SquareIcon,
   SquaresFourIcon,
   XIcon,
@@ -288,18 +289,24 @@ const Categories = memo(
               ) : null
             }
           >
-            <Group gap="4px">
+            <Text component="span" style={{ flexShrink: 1 }}>
               {cat.name}
-              <Text variant="caption" fz="xs">
-                ({cat.count})
-              </Text>
-            </Group>
+            </Text>
+            <Text variant="caption" fz="xs">
+              ({cat.count})
+            </Text>
           </Button>
         ))}
-        <CloseButton
+        <ActionIcon
+          variant="light"
           title="limpar filtro de categoria"
           onClick={() => setCategory(null)}
-        />
+          size="lg"
+          flex={1}
+          maw={64}
+        >
+          <EmptyIcon size={20} />
+        </ActionIcon>
       </>
     );
   },
@@ -412,7 +419,7 @@ export default function App() {
       </header>
       <main style={sizeToStyle(size)}>
         {categories ? (
-          <section className="categories print-hide">
+          <section className="categories print-hide" id="categories">
             <Categories
               categories={categories}
               setCategory={setCategory}

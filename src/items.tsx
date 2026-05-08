@@ -4,6 +4,7 @@ import {
   ActionIcon,
   alpha,
   Badge,
+  Box,
   Button,
   Card,
   CloseButton,
@@ -77,6 +78,11 @@ function ShowPrice({
       ) : null}
     </Stack>
   );
+}
+
+function ShowCategory({ category }: { category?: string | null }) {
+  if (!category) return null;
+  return <Box className="item-category">{category}</Box>;
 }
 
 function isAvailable(status: Row["status"]) {
@@ -161,9 +167,7 @@ const ItemCard = memo(
               <Text>{row.description}</Text>
             </Stack>
             <Stack className="item-badges">
-              {row.category ? (
-                <Badge variant="outline">{row.category}</Badge>
-              ) : null}
+              <ShowCategory category={row.category} />
               {!available ? (
                 <Badge
                   color={row.status === "reservado" ? "orange" : "red"}

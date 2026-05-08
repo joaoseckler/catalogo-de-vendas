@@ -16,12 +16,18 @@ footer {
   gap: 1rem;
   max-width: 1400px;
   padding: 1rem;
+  justify-content: center;
 }
 
 section.categories {
   justify-content: center;
   margin-bottom: 1rem;
   align-items: center;
+}
+
+section.categories .mantine-Button-label {
+  gap: 0.25rem;
+  white-space: normal;
 }
 
 footer {
@@ -51,6 +57,21 @@ footer {
   align-items: var(--item-badges-align, flex-end);
   flex-shrink: 0;
   margin-top: 0.5rem;
+  max-width: 30%;
+}
+
+.item-category {
+  max-width: 100%;
+  width: fit-content;
+  color: var(--mantine-primary-color-6);
+  border: 2px solid var(--mantine-primary-color-6);
+  padding: 0.2rem 0.4rem;
+  font-weight: bold;
+  font-size: 11px;
+  text-transform: uppercase;
+  border-radius: 8px;
+  text-align: center;
+  text-decoration: none;
 }
 
 .top-right {
