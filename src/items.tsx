@@ -2,6 +2,7 @@ import "@mantine/core/styles.css";
 import "./styles.css";
 import {
   ActionIcon,
+  alpha,
   Badge,
   Button,
   Card,
@@ -214,6 +215,7 @@ const ItemCard = memo(
             onClick={previousImage}
             className="middle-left"
             size="lg"
+            bg={alpha("var(--mantine-primary-color-1)", 0.4)}
           >
             <ArrowCircleLeftIcon size={36} />
           </ActionIcon>
@@ -225,6 +227,7 @@ const ItemCard = memo(
             onClick={nextImage}
             className="middle-right"
             size="lg"
+            bg={alpha("var(--mantine-primary-color-1)", 0.4)}
           >
             <ArrowCircleRightIcon size={36} />
           </ActionIcon>
