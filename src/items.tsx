@@ -1,4 +1,5 @@
 import "@mantine/core/styles.css";
+import { useSwipeable } from "react-swipeable";
 import "./styles.css";
 import {
   ActionIcon,
@@ -16,7 +17,6 @@ import {
   Stack,
   Text,
   Title,
-  useMatches,
 } from "@mantine/core";
 import {
   ArrowCircleLeftIcon,
@@ -99,6 +99,58 @@ function isAvailable(status: Row["status"]) {
   }
 
   return true;
+}
+
+function ItemCardModal({
+  row,
+  dialogId,
+  setDialogId,
+  imageIndex = 0,
+  nextImage,
+  previousImage,
+}: {
+  row: Row | null;
+  dialogId: number | null;
+  setDialogId: (id: number | null) => void;
+  imageIndex?: number;
+  nextImage?: () => void;
+  previousImage?: () => void;
+}) {
+  const swipeHandlers = useSwipeable({
+    onSwipedLeft: () => {
+      if (nextImage) nextImage();
+    },
+    onSwipedRight: () => {
+      if (previousImage) previousImage();
+    },
+    trackMouse: false,
+  });
+
+  return (
+    <Modal
+      opened={dialogId !== null}
+      onClose={() => setDialogId(null)}
+      withCloseButton={false}
+      padding={0}
+      centered
+      size="auto"
+      style={{ "--item-max-width": "90vw" } as CSSProperties}
+      {...swipeHandlers}
+    >
+      {row ? (
+        <ItemCard
+          row={row}
+          selected
+          setDialog={setDialogId}
+          imageIndex={imageIndex}
+          nextImage={
+            imageIndex < row.imageLinks.length - 1 ? nextImage : undefined
+          }
+          previousImage={imageIndex > 0 ? previousImage : undefined}
+        />
+      ) : null}
+    </Modal>
+  );
 }
 
 const ItemCard = memo(
@@ -244,7 +296,7 @@ const ItemCard = memo(
 const Items = memo(({ rows }: { rows: Row[] }) => {
   const [dialogId, setDialogId] = useState<number | null>(null);
   const [imageIndex, setImageIndex] = useState(0);
-  const showDialog = useMatches({ md: true });
+  const showDialog = true;
   const selectedRow = useMemo(
     () => rows.find((r) => r.id === dialogId) || null,
     [dialogId, rows],
@@ -297,30 +349,20 @@ const Items = memo(({ rows }: { rows: Row[] }) => {
           setDialog={showDialog ? setDialog : undefined}
         />
       ))}
-      <Modal
-        opened={dialogId !== null}
-        onClose={() => setDialog(null)}
-        withCloseButton={false}
-        padding={0}
-        centered
-        size="auto"
-        style={{ "--item-max-width": "90vw" } as CSSProperties}
-      >
-        {selectedRow ? (
-          <ItemCard
-            row={selectedRow}
-            selected
-            setDialog={setDialogId}
-            imageIndex={imageIndex}
-            nextImage={
-              imageIndex < selectedRow.imageLinks.length - 1
-                ? nextImage
-                : undefined
-            }
-            previousImage={imageIndex > 0 ? previousImage : undefined}
-          />
-        ) : null}
-      </Modal>
+      <ItemCardModal
+        row={selectedRow}
+        dialogId={dialogId}
+        setDialogId={setDialogId}
+        imageIndex={imageIndex}
+        nextImage={
+          selectedRow && imageIndex < selectedRow.imageLinks.length - 1
+            ? nextImage
+            : undefined
+        }
+        previousImage={
+          selectedRow && imageIndex > 0 ? previousImage : undefined
+        }
+      />
     </>
   );
 });
