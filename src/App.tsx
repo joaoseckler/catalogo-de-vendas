@@ -33,6 +33,7 @@ import {
   memo,
   type SetStateAction,
   startTransition,
+  useCallback,
   useDeferredValue,
   useMemo,
   useState,
@@ -135,54 +136,66 @@ function SizeControl({
 
 function SearchControls({
   setQuery,
+  sort,
   setSort,
   setSize,
 }: {
   setQuery: (value: string) => void;
+  sort: Sort | null;
   setSort: Dispatch<SetStateAction<Sort | null>>;
   setSize: Dispatch<SetStateAction<Size>>;
 }) {
   const [value, setValue] = useState("");
-  const [sort, setInnerSort] = useState<Sort | null>(null);
+  const [innerSort, setInnerSort] = useState<Sort | null>(null);
   const [size, setInnerSize] = useState<Size>(defaultSize);
 
-  function handleSort(value: Sort | null) {
-    setInnerSort(value);
-    startTransition(() => {
-      setSort(value);
-    });
-  }
+  const handleSort = useCallback(
+    (value: Sort | null) => {
+      setInnerSort(value);
+      startTransition(() => {
+        setSort(value);
+      });
+    },
+    [setSort],
+  );
 
-  function toggleSort(field: SortField) {
-    setInnerSort((s) => {
+  const toggleSort = useCallback(
+    (field: SortField) => {
       const newSort = {
         field,
-        dir: (s?.field === field && s?.dir === "asc"
+        dir: (sort?.field === field && sort?.dir === "asc"
           ? "desc"
           : "asc") as SortDir,
       };
 
+      setInnerSort(newSort);
+
       startTransition(() => {
         setSort(newSort);
       });
+    },
+    [setSort, sort],
+  );
 
-      return newSort;
-    });
-  }
+  const handleSearch = useCallback(
+    (value: string) => {
+      setValue(value);
+      startTransition(() => {
+        setQuery(value);
+      });
+    },
+    [setQuery],
+  );
 
-  function handleSearch(value: string) {
-    setValue(value);
-    startTransition(() => {
-      setQuery(value);
-    });
-  }
-
-  function handleSize(value: Size) {
-    setInnerSize(value);
-    startTransition(() => {
-      setSize(value);
-    });
-  }
+  const handleSize = useCallback(
+    function handleSize(value: Size) {
+      setInnerSize(value);
+      startTransition(() => {
+        setSize(value);
+      });
+    },
+    [setSize],
+  );
 
   return (
     <Flex
@@ -210,19 +223,19 @@ function SearchControls({
         <SortButton
           field="price"
           label="preço"
-          sort={sort}
+          sort={innerSort}
           setSort={() => toggleSort("price")}
         />
         <SortButton
           field="name"
           label="nome"
-          sort={sort}
+          sort={innerSort}
           setSort={() => toggleSort("name")}
         />
         <SortButton
           field="code"
           label="código"
-          sort={sort}
+          sort={innerSort}
           setSort={() => toggleSort("code")}
         />
         <Button
@@ -352,9 +365,7 @@ export default function App() {
     }
 
     if (sort?.field && sort?.dir) {
-      filtered = filtered.sort((a, b) => {
-        if (!sort?.field && !sort?.dir) return 0;
-
+      filtered = [...filtered].sort((a, b) => {
         let compareValue = 0;
 
         if (sort.field === "price") {
@@ -413,6 +424,7 @@ export default function App() {
         <Divider my="md" />
         <SearchControls
           setQuery={setValue}
+          sort={sort}
           setSort={setSort}
           setSize={setSize}
         />
