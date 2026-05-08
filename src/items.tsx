@@ -9,6 +9,7 @@ import {
   Button,
   Card,
   CloseButton,
+  CopyButton,
   Flex,
   Group,
   Image,
@@ -21,6 +22,8 @@ import {
 import {
   ArrowCircleLeftIcon,
   ArrowCircleRightIcon,
+  CopyIcon,
+  ShareIcon,
   WhatsappLogoIcon,
 } from "@phosphor-icons/react";
 import {
@@ -61,7 +64,7 @@ function ShowPrice({
   perUnit?: boolean;
 }) {
   return (
-    <Stack gap="0">
+    <Stack gap="0" style={{ flexShrink: 0 }}>
       <Text fz="xl" fw={700} c={`${theme.primaryColor}.9`}>
         <NumberFormatter
           value={value}
@@ -104,14 +107,14 @@ function isAvailable(status: Row["status"]) {
 function ItemCardModal({
   row,
   dialogId,
-  setDialogId,
+  setDialog,
   imageIndex = 0,
   nextImage,
   previousImage,
 }: {
   row: Row | null;
   dialogId: number | null;
-  setDialogId: (id: number | null) => void;
+  setDialog: (id: number | null) => void;
   imageIndex?: number;
   nextImage?: () => void;
   previousImage?: () => void;
@@ -129,7 +132,7 @@ function ItemCardModal({
   return (
     <Modal
       opened={dialogId !== null}
-      onClose={() => setDialogId(null)}
+      onClose={() => setDialog(null)}
       withCloseButton={false}
       padding={0}
       centered
@@ -141,12 +144,13 @@ function ItemCardModal({
         <ItemCard
           row={row}
           selected
-          setDialog={setDialogId}
+          setDialog={setDialog}
           imageIndex={imageIndex}
           nextImage={
             imageIndex < row.imageLinks.length - 1 ? nextImage : undefined
           }
           previousImage={imageIndex > 0 ? previousImage : undefined}
+          showShare={true}
         />
       ) : null}
     </Modal>
@@ -161,6 +165,7 @@ const ItemCard = memo(
     imageIndex = 0,
     nextImage,
     previousImage,
+    showShare = false,
   }: {
     row: Row;
     dialogId?: number | null;
@@ -169,6 +174,7 @@ const ItemCard = memo(
     imageIndex?: number;
     nextImage?: () => void;
     previousImage?: () => void;
+    showShare?: boolean;
   }) => {
     const available = isAvailable(row.status);
     if (available === null) {
@@ -176,9 +182,11 @@ const ItemCard = memo(
     }
 
     const selectedImage = row.imageLinks[imageIndex];
+    const itemUrl = `${window.location.origin}${window.location.pathname}#item-${row.id}`;
 
     return (
       <Card
+        id={`item-${row.id}`}
         shadow="md"
         radius="sm"
         className="item-card"
@@ -208,7 +216,7 @@ const ItemCard = memo(
             fit="contain"
           />
         </Card.Section>
-        <Stack justify="space-between" flex={1}>
+        <Stack justify="space-between" flex={1} gap="lg">
           <Flex
             className="item-header"
             justify="space-between"
@@ -232,20 +240,68 @@ const ItemCard = memo(
               <Badge color="gray">cód. {row.id}</Badge>
             </Stack>
           </Flex>
-          <Group justify="space-between" align="flex-end">
+          <Group justify="space-between" align="flex-end" wrap="nowrap">
             <ShowPrice value={row.value} perUnit={row.perUnit} />
-            <Button
-              component={available ? "a" : undefined}
-              href={whatsappLink(row)}
-              target="_blank"
-              color="lime.7"
-              size="sm"
-              rightSection={<WhatsappLogoIcon size={20} />}
-              className="print-hide"
-              disabled={!available}
-            >
-              tenho interesse
-            </Button>
+            <Group justify="flex-end" align="center" gap={6}>
+              {showShare ? (
+                navigator.share ? (
+                  <Button
+                    title="compartilhar"
+                    className="print-hide"
+                    leftSection={<ShareIcon size={20} />}
+                    size="sm"
+                    disabled={!available}
+                    onClick={() => {
+                      navigator
+                        .share({
+                          title: row.title,
+                          text: `Confira este item à venda: ${row.title} (código ${row.id})`,
+                          url: itemUrl,
+                        })
+                        .catch((error) => {
+                          console.error("Erro ao compartilhar:", error);
+                        });
+                    }}
+                  >
+                    compartilhar
+                  </Button>
+                ) : (
+                  <CopyButton value={itemUrl} timeout={2000}>
+                    {({ copied, copy }) => (
+                      <Button
+                        title="compartilhar"
+                        className="print-hide"
+                        variant={copied ? "outline" : undefined}
+                        leftSection={
+                          copied ? (
+                            <CopyIcon size={20} />
+                          ) : (
+                            <ShareIcon size={20} />
+                          )
+                        }
+                        size="sm"
+                        disabled={!available}
+                        onClick={copy}
+                      >
+                        {copied ? "copiado" : "compartilhar"}
+                      </Button>
+                    )}
+                  </CopyButton>
+                )
+              ) : null}
+              <Button
+                component={available ? "a" : undefined}
+                href={whatsappLink(row)}
+                target="_blank"
+                color="lime.7"
+                size="sm"
+                rightSection={<WhatsappLogoIcon size={20} />}
+                className="print-hide"
+                disabled={!available}
+              >
+                tenho interesse
+              </Button>
+            </Group>
           </Group>
         </Stack>
         {row.imageLinks.length > 1 ? (
@@ -294,7 +350,16 @@ const ItemCard = memo(
 );
 
 const Items = memo(({ rows }: { rows: Row[] }) => {
-  const [dialogId, setDialogId] = useState<number | null>(null);
+  const fragmentId = useMemo(() => {
+    const hash = window.location.hash;
+    if (hash.startsWith("#item-")) {
+      const id = parseInt(hash.slice(6), 10);
+      return Number.isNaN(id) ? null : id;
+    }
+    return null;
+  }, []);
+
+  const [dialogId, setDialogId] = useState<number | null>(fragmentId);
   const [imageIndex, setImageIndex] = useState(0);
   const showDialog = true;
   const selectedRow = useMemo(
@@ -305,6 +370,11 @@ const Items = memo(({ rows }: { rows: Row[] }) => {
   const setDialog = useCallback((id: number | null) => {
     setDialogId(id);
     setImageIndex(0);
+    if (id !== null) {
+      history.replaceState(null, "", `#item-${id}`);
+    } else {
+      history.replaceState(null, "", window.location.pathname);
+    }
   }, []);
 
   const nextImage = useCallback(() => {
@@ -352,7 +422,7 @@ const Items = memo(({ rows }: { rows: Row[] }) => {
       <ItemCardModal
         row={selectedRow}
         dialogId={dialogId}
-        setDialogId={setDialogId}
+        setDialog={setDialog}
         imageIndex={imageIndex}
         nextImage={
           selectedRow && imageIndex < selectedRow.imageLinks.length - 1

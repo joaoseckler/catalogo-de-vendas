@@ -49,14 +49,13 @@ footer {
 .item-header {
   flex-direction: var(--item-header-direction, row);
   row-gap: 0;
-  column-gap: 0.5rem;
+  column-gap: 1rem;
 }
 
 .item-badges {
   gap: 0.25rem;
   align-items: var(--item-badges-align, flex-end);
   flex-shrink: 0;
-  margin-top: 0.5rem;
   max-width: 30%;
 }
 
@@ -72,6 +71,8 @@ footer {
   border-radius: 8px;
   text-align: center;
   text-decoration: none;
+  text-overflow: ellipsis;
+  overflow: hidden;
 }
 
 .top-right {
